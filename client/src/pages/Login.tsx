@@ -55,20 +55,23 @@ function Login() {
         }
     }
 
-    return <> {isLoading ? <Loader /> :
-        <div className="w-full h-90vh flex flex-col justify-center items-center">
-            {(currToken == null) && (<>
-            <h1 className="mb-6 text-5xl text-center">Welcome To Login Page</h1>
-            <InputEntry changeFunction={updateUser} name="email" text="Email" placeholder="Enter Your Email" />
-            <InputEntryPassword changeFunction={updateUser} name="password" text="Password" placeholder="Enter Your Password" />
-            <button className="customButton" type="submit" onClick={storeData}>Submit</button>
+    if (isLoading) return <Loader />;
 
-            <h2 className="text-2xl mb-4 mt-8">Don't have an Account?</h2>
-            <button className="customButton" onClick={()=>navigate("/register")}>Register</button>
-            </>)}
+    return <div className="w-full h-90vh flex flex-row justify-center items-center">
+        <div className="mx-5">
+            <div className="flex flex-row justify-center items-center bg-credbg rounded-3xl overflow-hidden shadow-3xl flex-wrap custom:py-0 py-10">
+                <img src="group.png" style={{ width: "30rem", height: "auto", objectFit: "contain" }} className="hidden custom:block"/>
+                <div className="flex flex-col justify-center items-center mx-12">
+                    <img src="logo.png" style={{ width: "3rem", height: "auto", objectFit: "contain" }} />
+                    <h1 className="mb-10 text-5xl text-black text-center font-logo font-bold">[Enter Name]</h1>
+                    <InputEntry changeFunction={updateUser} name="email" text="Email" placeholder="Email" />
+                    <InputEntryPassword changeFunction={updateUser} name="password" text="Password" placeholder="Password"/>
+                    <button className="bg-blue-600 hover:bg-blue-500 py-2 px-4 rounded-lg text-white mt-3 mb-2 shadow-lg" type="submit" onClick={storeData}>Log in</button>
+                    <h2 className="text-lg text-black mt-3">Don't have an Account? <span className="text-blue-500 cursor-pointer" onClick={()=>navigate("/register")}>Sign up</span></h2>
+                </div>
+            </div>
         </div>
-        }
-    </>
+    </div>
 }   
 
 export default Login;
