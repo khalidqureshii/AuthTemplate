@@ -1,13 +1,15 @@
+import { logoutUser } from "@/store/features/authSlice";
+import { AppDispatch } from "@/store/Store";
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../store/Auth";
 
 export const Logout = () => {
-    const {LogoutUser} = useAuth();
+    const dispatch: AppDispatch = useDispatch();
 
     useEffect(() => {
-        LogoutUser();
-    }, [LogoutUser]);
+        dispatch(logoutUser());
+    }, []);
 
     return <Navigate to='/login' />
 }

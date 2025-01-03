@@ -1,25 +1,37 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import InputEntry from "../components/InputEntry";
-import useAuth from "../store/Auth";
 import {useNavigate} from "react-router-dom";
 import {toast} from "react-toastify";
-import LINK from "../store/Link";
 import InputEntryPassword from "../components/InputEntryPassword";
 import Loader from "../components/Loader";
-import TOKENNAME from "../store/Token";
+import { storeData } from "@/api/Register";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+  } from "@/components/ui/dialog"
+import DemoVideo from "@/components/DemoVideo";
+import { useDispatch, useSelector } from "react-redux";
+import { authenticateUser, storeToken } from "@/store/features/authSlice";
+import { AppDispatch } from "@/store/Store";
 
 function Register() {
     const navigate = useNavigate();
-    const currToken = localStorage.getItem(TOKENNAME);
-    const {storeTokenInLS}  = useAuth();
-    const [user,setUser] = useState({username: "", email: "", phone: "", password: "", confirmPassword: "", match: true});
-    const [isLoading, setLoading] = useState(false);
-
-    React.useEffect(() => {
-        if (currToken) {
+    const isLoggedIn = useSelector((state: any) => state.auth.isLoggedIn)
+    const dispatch: AppDispatch = useDispatch();
+    const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+    const userLoading = useSelector((state: any) => state.auth.userLoading);
+    
+    useEffect(() => {
+        if (isLoggedIn) {
             navigate("/home"); 
         }
-    }, [currToken, navigate]);
+    }, [isLoggedIn]);
+    
+    const [user,setUser] = useState({username: "", email: "", password: "", confirmPassword: "", match: true});
+    const [isLoading, setLoading] = useState(false);
 
     function updateUser(event: React.ChangeEvent<HTMLElement>) {
         const { name, value } = event.target as HTMLInputElement;
@@ -33,46 +45,58 @@ function Register() {
         });
     }
 
-    async function storeData() {
-        if (!user.match) return;
+    async function storeDataLocal() {
+        if (!user.match) {
+            toast.error("Passwords Do Not Match");
+            return;
+        }
         setLoading(true);
-        const response = await fetch(LINK + "api/auth/register", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(user)
-        }); 
-        setLoading(false);
-        if (response.ok) {
-            toast("Successfully Registered");
-            const resp_data = await response.json();
-            storeTokenInLS(resp_data.token);
+        try {
+            const response= await storeData(user);
+            dispatch(storeToken(response.token));
+            await dispatch(authenticateUser(response.token));
+            toast.success("Successfully Registered");
             navigate("/home");
         }
-        else {
-            const res_data = await response.json();
-            toast(res_data.message);
+        catch (error) {
+            if (error instanceof Error) toast.error(error.message);
+        }
+        finally {
+            setLoading(false);
         }
     }
 
-    if (isLoading) return <Loader />;
+    if (isLoading || userLoading) return <Loader />;
 
     return <div className="w-full h-90vh flex items-center justify-center">
         <div className="flex bg-credbg rounded-3xl overflow-hidden shadow-3xl mx-5 flex-wrap custom:py-0 py-10">
-            <img src="group2.png" style={{ width: "35rem", height: "auto", objectFit: "contain" }} className="hidden custom:block"/>
+            <img src="registerImage.png" style={{ width: "35rem", height: "auto", objectFit: "contain" }} className="hidden custom:block"/>
             <div className="flex flex-col justify-center items-center text-center mx-20">
                 <img src="logo.png" style={{ width: "3rem", height: "auto", objectFit: "contain" }} />
-                <h1 className="text-5xl mb-10 text-black font-logo font-bold">[Enter Name]</h1>
+                <h1 className="text-5xl mb-10 text-black font-logo font-bold">Enter Name</h1>
                 <InputEntry changeFunction={updateUser} name="username" text="Username" placeholder="Username" value={user.username} /> 
                 <InputEntry changeFunction={updateUser} name="email" text="Email" placeholder="Email" value={user.email} />
                 <InputEntryPassword changeFunction={updateUser} name="password" text="Password" placeholder="Password" value={user.password} />
                 <InputEntryPassword changeFunction={updateUser} name="confirmPassword" text="Confirm Password" placeholder="Confirm Password" value={user.confirmPassword} />
-                <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-2 px-4 mt-3 shadow-lg" onClick={storeData}>Sign up</button>
+                <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-2 px-4 mt-3 shadow-lg" onClick={storeDataLocal}>Sign up</button>
 
                 <h2 className="text-lg mt-5 text-black">Already have an Account? <span className="text-blue-500 cursor-pointer" onClick={()=>navigate("/login")}>Log in</span></h2>
+                <h1 className="mt-3 text-lg text-rose-700 cursor-pointer" onClick={()=>setIsDialogOpen(true)}>Demo Video</h1>
             </div>
         </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="max-w-xl p-6 overflow-hidden">
+                <DialogHeader>
+                    <DialogTitle className="mb-3">Demo Video</DialogTitle>
+                    <DialogDescription>
+                        <div className="relative w-full max-h-[315px] overflow-hidden">
+                            <DemoVideo />
+                        </div>
+                    </DialogDescription>
+                </DialogHeader>
+            </DialogContent>
+        </Dialog>
     </div>
 }   
 
